@@ -288,12 +288,12 @@ White line on a dark floor? `sensors.setLine(WHITE);` flips the comparison, at a
 Each sensor has a **weight** saying where it sits on the array:
 
 ```
-sensor:  0  1  2  3  4  5  6  7   8  9 10 11 12 13 14 15
-weight: 16 14 12  8  6  4  2  1  -1 -2 -4 -6 -8 -12 -14 -16
-        <-------- right        left -------->
+sensor:   0   1   2  3  4  5  6  7   8  9 10 11 12 13 14 15
+weight: -16 -14 -12 -8 -6 -4 -2 -1   1  2  4  6  8 12 14 16
+        <--------- right       left --------->
 ```
 
-**Sensor 0 is the one on the right and sensor 15 is on the left.** That is fixed by the hardware, not by how you wire it, so the right-hand sensors carry the positive numbers.
+**Sensor 0 is the one on the right and sensor 15 is on the left.** That is fixed by the hardware, not by how you wire it. The right-hand sensors carry the negative numbers, so a **negative** position means the line went right — the same way round as the Spirit robot firmware.
 
 There is no zero, because with an even number of sensors the true middle falls between sensors 7 and 8.
 
@@ -303,9 +303,9 @@ The position is a weighted average of the sensors that can see the line. Because
 
 | `readLine()` returns | Meaning |
 |---|---|
-| about `-16000` | line is hard over to the **left** |
+| about `-16000` | line is hard over to the **right** |
 | `0` | line is **dead centre** |
-| about `+16000` | line is hard over to the **right** |
+| about `+16000` | line is hard over to the **left** |
 
 `getError()` is the same thing measured from the centre point. With the default weights the centre is 0, so both give the same answer — but if you set your own weights, `getError()` is the one that stays honest.
 
@@ -314,19 +314,19 @@ The position is a weighted average of the sensors that can see the line. Because
 ### 4. Steering
 
 ```cpp
-sensors.setPID(0.008, 0.0, 0.005);   // kp, ki, kd
+sensors.setPID(0.035, 0.0, 0.75);   // kp, ki, kd
 
 void loop() {
   sensors.read(values);
   int correction = sensors.getCorrection();
 
-  int leftSpeed  = BASE_SPEED + correction;
-  int rightSpeed = BASE_SPEED - correction;
+  int leftSpeed  = BASE_SPEED - correction;
+  int rightSpeed = BASE_SPEED + correction;
   // send those to your motors
 }
 ```
 
-Positive means the line drifted right, so speed the left wheel up.
+Negative means the line drifted right, so the left wheel gets *less* and the right wheel more. That is why the correction is subtracted from the left.
 
 ---
 
@@ -371,7 +371,7 @@ Positive means the line drifted right, so speed the left wheel up.
 |---|---|
 | `void setLine(int mode)` | `BLACK` or `WHITE`. Anything else is ignored and warns. Takes effect immediately. |
 | `void setWeights(int w[16])` | Your own weights. Also recalculates the centre point. **Keep every weight between −32 and +32** — see below. |
-| `int readLine()` | Where the line is. Roughly −16000 to +16000 with default weights. Positive means the line went right. |
+| `int readLine()` | Where the line is. Roughly −16000 to +16000 with default weights. Negative means the line went right. |
 | `int getError()` | How far off centre, which is what you steer on. |
 | `bool lineFound()` | `true` if at least one sensor can see the line. |
 
@@ -380,7 +380,7 @@ Positive means the line drifted right, so speed the left wheel up.
 | Function | What it does |
 |---|---|
 | `void setPID(float kp, float ki, float kd)` | Sets the three steering numbers. |
-| `int getCorrection()` | The steering number. Positive = line drifted right. |
+| `int getCorrection()` | The steering number. Negative = line drifted right. |
 
 ### Printing (for debugging)
 
@@ -460,13 +460,13 @@ Not every mistake can be detected, so here are the usual suspects:
 
 Do this in order, and change **one number at a time**.
 
-1. **Start with `setPID(0.008, 0.0, 0.0)`** — only `kp`, the other two at zero.
+1. **Start with `setPID(0.035, 0.0, 0.0)`** — only `kp`, the other two at zero.
 2. **Raise `kp`** until the robot follows the line. Too low and it drifts off corners; too high and it snakes violently.
 3. **Back `kp` off slightly**, until it follows with only a gentle wobble.
-4. **Add a little `kd`**, maybe `0.002` to `0.01`. This damps the wobble.
+4. **Add `kd`**, around `0.75` to start. This damps the wobble, and is much larger than `kp` because it works on the *change* in error.
 5. **Leave `ki` at 0.** You only need it if the robot consistently sits to one side, and even then keep it tiny.
 
-> **Coming from the ARC8?** The ARC16 position range is four times as wide, −16000 to +16000 instead of −4000 to +4000, so start with roughly **a quarter** of the `kp` you used there.
+> **Coming from the ARC8?** The ARC16 position range is twice as wide, −16000 to +16000 instead of −8000 to +8000, so start with roughly **half** the `kp` you used there.
 
 | Symptom | Try |
 |---|---|

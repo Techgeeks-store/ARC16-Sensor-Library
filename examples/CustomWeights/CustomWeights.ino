@@ -4,14 +4,15 @@
   Every sensor has a weight: a number saying where it sits on the array.
   readLine() mixes them together to say where the line is.
 
-  Sensor 0 is the one on the RIGHT and sensor 15 is on the LEFT, so the
-  right-hand sensors get positive numbers and the left-hand ones negative.
+  Sensor 0 is the one on the RIGHT and sensor 15 is on the LEFT. The
+  right-hand sensors get negative numbers and the left-hand ones positive,
+  so a negative position means the line has gone right.
 
   The weights the library starts with are spread out towards the ends:
 
-      sensor:  0  1  2  3  4  5  6  7   8  9 10 11 12 13 14 15
-      weight: 16 14 12  8  6  4  2  1  -1 -2 -4 -6 -8 -12 -14 -16
-              <-------- right      left -------->
+      sensor:   0   1   2  3  4  5  6  7   8  9 10 11 12 13 14 15
+      weight: -16 -14 -12 -8 -6 -4 -2 -1   1  2  4  6  8 12 14 16
+              <-------- right       left -------->
 
   They are not evenly spaced, because the array is curved. The outer
   sensors sit further out to the side, so they move the position number
@@ -42,9 +43,9 @@ const int SIGNAL_PIN = A5;     // SIG - every sensor comes through this one pin
 
 int values[16];
 
-// Evenly spaced, right-hand side positive.
-int myWeights[16] = { 8,  7,  6,  5,  4,  3,  2,  1,
-                     -1, -2, -3, -4, -5, -6, -7, -8};
+// Evenly spaced, right-hand side negative.
+int myWeights[16] = {-8, -7, -6, -5, -4, -3, -2, -1,
+                      1,  2,  3,  4,  5,  6,  7,  8};
 
 void setup() {
   Serial.begin(9600);

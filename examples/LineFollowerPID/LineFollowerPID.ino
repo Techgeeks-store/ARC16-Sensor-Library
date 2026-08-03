@@ -4,9 +4,9 @@
   A complete line follower.
 
   The library works out how far off the line the robot is, and
-  getCorrection() turns that into one steering number. A positive number
-  means the line has drifted to the right, so speed the left wheel up and
-  slow the right wheel down. A negative number means the opposite.
+  getCorrection() turns that into one steering number. A negative number
+  means the line has drifted to the right, so speed the right wheel up and
+  slow the left wheel down. A positive number means the opposite.
 
   How to tune it:
     1. Start with kp small and ki and kd both 0.
@@ -14,12 +14,14 @@
     3. Add a little kd to calm the wobble down.
     4. Leave ki at 0 unless the robot always sits slightly off to one side.
 
-  Sensor 0 is on the RIGHT of the array and sensor 15 on the LEFT, which is
-  what makes a positive number mean "the line went right".
+  Sensor 0 is on the RIGHT of the array and sensor 15 on the LEFT, and the
+  right-hand sensors carry the negative weights. So the line going right
+  makes the number go NEGATIVE, which is why the steering line below
+  subtracts the correction from the left wheel.
 
-  The position runs from about -16000 to +16000, which is four times the
-  range of an 8-sensor bar. So if you are moving over from the ARC8, start
-  with about a quarter of the kp you used there.
+  The position runs from about -16000 to +16000, which is twice the range
+  of an 8-sensor array. Moving over from the ARC8, start with about half
+  the kp you used there.
 
   The motor pins below are for an L298N driver. Change them to match yours.
 */
@@ -58,7 +60,7 @@ void setup() {
 
   sensors.begin(select, ENABLE_PIN, SIGNAL_PIN);
   sensors.setLine(BLACK);
-  sensors.setPID(0.008, 0.0, 0.005);
+  sensors.setPID(0.035, 0.0, 0.75);
 
   // Sweep the robot across the line by hand while these 3 seconds run.
   Serial.println(F("Sweep the robot across the line now!"));
@@ -82,7 +84,7 @@ void loop() {
   // was already turning and usually finds the line again.
   int correction = sensors.getCorrection();
 
-  drive(BASE_SPEED + correction, BASE_SPEED - correction);
+  drive(BASE_SPEED - correction, BASE_SPEED + correction);
 }
 
 // Sends a speed to each motor. Both wheels always go forwards here, so any
