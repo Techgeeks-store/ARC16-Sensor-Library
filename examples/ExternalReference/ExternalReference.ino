@@ -44,9 +44,9 @@
 
 ARC16 sensors;
 
-int select[4] = {2, 3, 4, 5};
-const int ENABLE_PIN = 6;
-const int SIGNAL_PIN = A0;
+int select[4] = {A0, A1, A2, A3};  // S0, S1, S2, S3
+const int ENABLE_PIN = A4;     // E pin, active LOW - the library holds it low
+const int SIGNAL_PIN = A5;     // SIG - every sensor comes through this one pin
 
 int values[16];
 

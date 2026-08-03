@@ -14,8 +14,12 @@
     3. Add a little kd to calm the wobble down.
     4. Leave ki at 0 unless the robot always sits slightly off to one side.
 
-  With 16 sensors the position runs from about -8000 to +8000, so kp wants
-  to be about half of what you would use on an 8-sensor bar.
+  Sensor 0 is on the RIGHT of the array and sensor 15 on the LEFT, which is
+  what makes a positive number mean "the line went right".
+
+  The position runs from about -16000 to +16000, which is four times the
+  range of an 8-sensor bar. So if you are moving over from the ARC8, start
+  with about a quarter of the kp you used there.
 
   The motor pins below are for an L298N driver. Change them to match yours.
 */
@@ -24,9 +28,9 @@
 
 ARC16 sensors;
 
-int select[4] = {2, 3, 4, 5};
-const int ENABLE_PIN = 6;
-const int SIGNAL_PIN = A0;
+int select[4] = {A0, A1, A2, A3};  // S0, S1, S2, S3
+const int ENABLE_PIN = A4;     // E pin, active LOW - the library holds it low
+const int SIGNAL_PIN = A5;     // SIG - every sensor comes through this one pin
 
 int values[16];
 
@@ -54,7 +58,7 @@ void setup() {
 
   sensors.begin(select, ENABLE_PIN, SIGNAL_PIN);
   sensors.setLine(BLACK);
-  sensors.setPID(0.015, 0.0, 0.01);
+  sensors.setPID(0.008, 0.0, 0.005);
 
   // Sweep the robot across the line by hand while these 3 seconds run.
   Serial.println(F("Sweep the robot across the line now!"));

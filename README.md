@@ -11,6 +11,7 @@ Built for line following, maze solving, and edge or sumo-ring detection. Twice t
 - [What the sensor does](#what-the-sensor-does)
 - [How 16 sensors fit on one pin](#how-16-sensors-fit-on-one-pin)
 - [Which boards work](#which-boards-work)
+- [Power and mounting](#power-and-mounting)
 - [Installing the library](#installing-the-library)
 - [Wiring](#wiring)
 - [Your first sketch](#your-first-sketch)
@@ -27,7 +28,9 @@ Built for line following, maze solving, and edge or sumo-ring detection. Twice t
 
 ## What the sensor does
 
-The ARC16 has 16 infrared sensors in a row. Each one shines invisible light at the floor and measures how much bounces back.
+The ARC16 has 16 infrared sensors set in a curve rather than a straight line. Each one shines invisible light at the floor and measures how much bounces back.
+
+The curve is deliberate. It gives the array a wider field of view and lets it pick up sharp turns, acute angles, intersections, line gaps, circular loops and track inversions that a straight array would run straight past.
 
 Each sensor gives you a number from **0 to 1023**:
 
@@ -77,6 +80,26 @@ Two things worth knowing:
 
 ---
 
+## Power and mounting
+
+| | |
+|---|---|
+| Input voltage | 5V DC only |
+| Input current | about 310 mA |
+| Weight | 8 g |
+| Working height | 3 to 10 mm above the track |
+| Mounting | 2 × M2 screw holes |
+
+**The ARC16 wants 5V, not 3.3V.** If you have used an ARC8 before, note the difference: the ARC8 will run anywhere from 3.3V to 5V, the ARC16 will not.
+
+310 mA is a lot for a sensor, roughly double what an ARC8 draws. Do not try to run it from an Arduino pin. Give it a proper 5V supply from an MP1584, an LM7805 or similar. If you are using the Blueprint 01 Robot Controller Board, its onboard LM7805 is rated for this and the sensor rail gives you a 5V pin to plug into.
+
+Mount the array with the two M2 screw holes and set the height anywhere between 3 and 10 mm. Which height works best depends on your track, so try a few and watch the readings.
+
+There is an indicator LED on the board. It lights up steadily when the sensor has power.
+
+---
+
 ## Installing the library
 
 ### Option 1 — Add .ZIP Library (recommended)
@@ -119,25 +142,47 @@ Six pins, plus power:
 
 | ARC16 pin | Arduino | In your code |
 |---|---|---|
-| S0 | D2 | `select[0]` |
-| S1 | D3 | `select[1]` |
-| S2 | D4 | `select[2]` |
-| S3 | D5 | `select[3]` |
-| EN (enable) | D6 | `enable` |
-| SIG (signal) | A0 | `signal` |
+| S0 | A0 | `select[0]` |
+| S1 | A1 | `select[1]` |
+| S2 | A2 | `select[2]` |
+| S3 | A3 | `select[3]` |
+| E (enable) | A4 | `enable` |
+| SIG (signal) | A5 | `signal` |
 | VCC | 5V | — |
 | GND | GND | — |
 
 ```cpp
-int select[4] = {2, 3, 4, 5};   // S0, S1, S2, S3 - order matters
-sensors.begin(select, 6, A0);   // ...then enable, then signal
+int select[4] = {A0, A1, A2, A3};   // S0, S1, S2, S3 - order matters
+sensors.begin(select, A4, A5);      // ...then enable, then signal
 ```
 
-Those pin numbers are only a suggestion — use whichever you like. The **order inside `select[]` is what matters**: S0 first, S3 last. Get that wrong and your sensors come back shuffled.
+A0 to A3 and A4 are being used as ordinary digital outputs here, which the Nano is happy to do. Only SIG needs to be a real analog input.
+
+Everything sits on A0 to A5, so an ARC16 plugs straight into the sensor rail of the Blueprint 01 Robot Controller Board with nothing left over.
+
+The **order inside `select[]` is what matters**: S0 first, S3 last. Get that wrong and your sensors come back shuffled.
 
 **The enable pin is active LOW.** The library drives it LOW in `begin()` and leaves it there for the whole run, so the array is always switched on. You never have to think about it.
 
 > Watch the numbering: your board may label the sensors **1 to 16**, but in code they are always **0 to 15**. Asking for sensor `16` gets you `ARC16: bad sensor index`.
+>
+> **Sensor 0 is the one on the right, sensor 15 is on the left.** The multiplexer channel decides that, so it is the same on every board and you cannot change it by rewiring.
+
+### If you also need I2C
+
+A4 and A5 are the Nano's I2C pins (SDA and SCL). While the ARC16 is using them, you cannot run an I2C device such as an MPU6050 at the same time. If you need both, move two pins:
+
+| ARC16 pin | Instead of | Use |
+|---|---|---|
+| E (enable) | A4 | any spare digital pin, e.g. D13 |
+| SIG (signal) | A5 | A6 or A7 |
+
+```cpp
+int select[4] = {A0, A1, A2, A3};
+sensors.begin(select, 13, A6);      // enable on D13, signal on A6
+```
+
+That frees A4 and A5 for I2C. A6 and A7 are analog-only on the Nano, which is exactly what SIG needs anyway, so nothing is wasted. On the Blueprint 01 board, D13 is the digital pin left free by the motors, buttons and LEDs.
 
 ---
 
@@ -148,12 +193,12 @@ Those pin numbers are only a suggestion — use whichever you like. The **order 
 
 ARC16 sensors;
 
-int select[4] = {2, 3, 4, 5};
+int select[4] = {A0, A1, A2, A3};
 int values[16];
 
 void setup() {
-  Serial.begin(9600);            // you must do this yourself
-  sensors.begin(select, 6, A0);  // select pins, enable pin, signal pin
+  Serial.begin(9600);              // you must do this yourself
+  sensors.begin(select, A4, A5);   // select pins, enable pin, signal pin
 }
 
 void loop() {
@@ -234,27 +279,33 @@ sensors.readDigital(onTheLine);      // true / false for each sensor
 int howMany = sensors.countOnLine();
 ```
 
-White line on a dark floor? `sensors.setLine(WHITE);` flips the comparison, at any time, even mid-loop.
+White line on a dark floor? `sensors.setLine(WHITE);` flips the comparison, at any time, even mid-loop. That also covers track inversion: if your track flips from black-on-white to white-on-black partway round, call `setLine(WHITE)` the moment you detect it and everything downstream follows on the very next read.
+
+> **`readDigital()` is not `digitalRead()`.** The ARC16 can be read with `digitalRead()` on the SIG pin, but the manual warns that anywhere between about 1.5V and 3V the output is unpredictable, so on a poor track the value flickers. This library never does that. `readDigital()` takes the full analog reading, stretches it with your calibration, then compares it to the threshold. You get a steady yes or no even where `digitalRead()` would jump around.
 
 ### 3. Where is the line?
 
-Each sensor has a **weight** saying where it sits on the bar:
+Each sensor has a **weight** saying where it sits on the array:
 
 ```
-sensor:  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
-weight: -8 -7 -6 -5 -4 -3 -2 -1  1  2  3  4  5  6  7  8
-        <---------- left     right ---------->
+sensor:  0  1  2  3  4  5  6  7   8  9 10 11 12 13 14 15
+weight: 16 14 12  8  6  4  2  1  -1 -2 -4 -6 -8 -12 -14 -16
+        <-------- right        left -------->
 ```
 
-There is no zero, because with an even number of sensors the true middle falls *between* sensors 7 and 8.
+**Sensor 0 is the one on the right and sensor 15 is on the left.** That is fixed by the hardware, not by how you wire it, so the right-hand sensors carry the positive numbers.
 
-The position is a weighted average of the sensors that can see the line. Because a sensor half-over the tape reads lower than one sitting right on it, sensors that barely touch the line only tug the answer a little — which makes the number slide smoothly as you drift.
+There is no zero, because with an even number of sensors the true middle falls between sensors 7 and 8.
+
+The numbers are not evenly spaced. They widen towards the ends to match the curve of the array: the outer sensors sit further out to the side, so they move the position further when the line reaches them.
+
+The position is a weighted average of the sensors that can see the line. Because a sensor half-over the tape reads lower than one sitting right on it, sensors that barely touch the line only tug the answer a little, which makes the number slide smoothly as you drift.
 
 | `readLine()` returns | Meaning |
 |---|---|
-| about `-8000` | line is hard over to the **left** |
+| about `-16000` | line is hard over to the **left** |
 | `0` | line is **dead centre** |
-| about `+8000` | line is hard over to the **right** |
+| about `+16000` | line is hard over to the **right** |
 
 `getError()` is the same thing measured from the centre point. With the default weights the centre is 0, so both give the same answer — but if you set your own weights, `getError()` is the one that stays honest.
 
@@ -263,7 +314,7 @@ The position is a weighted average of the sensors that can see the line. Because
 ### 4. Steering
 
 ```cpp
-sensors.setPID(0.015, 0.0, 0.01);   // kp, ki, kd
+sensors.setPID(0.008, 0.0, 0.005);   // kp, ki, kd
 
 void loop() {
   sensors.read(values);
@@ -320,7 +371,7 @@ Positive means the line drifted right, so speed the left wheel up.
 |---|---|
 | `void setLine(int mode)` | `BLACK` or `WHITE`. Anything else is ignored and warns. Takes effect immediately. |
 | `void setWeights(int w[16])` | Your own weights. Also recalculates the centre point. **Keep every weight between −32 and +32** — see below. |
-| `int readLine()` | Where the line is. Roughly −8000 to +8000 with default weights. |
+| `int readLine()` | Where the line is. Roughly −16000 to +16000 with default weights. Positive means the line went right. |
 | `int getError()` | How far off centre, which is what you steer on. |
 | `bool lineFound()` | `true` if at least one sensor can see the line. |
 
@@ -394,7 +445,9 @@ Not every mistake can be detected, so here are the usual suspects:
 | **Nothing at all in the Serial Monitor** | No `Serial.begin(9600);` in `setup()`, or the Serial Monitor's speed box does not match. |
 | **All numbers stuck at 0, or stuck at 1023** | Power or wiring. Check VCC, GND, and the signal wire. |
 | **Wild, jumpy readings after using the AREF option** | AREF is not actually jumpered to 3.3V, but you passed `true`. |
-| **Numbers barely change** between tape and floor | The bar is too far from the ground. Aim for roughly 5–10 mm. |
+| **Numbers barely change** between tape and floor | The array is at the wrong height. It works between 3 and 10 mm off the track. Move it up or down until the gap between white and black readings is widest. |
+| **The indicator LEDs are off, or flickering** | Off means no power at all. Flickering means the supply is not steady: loose jumper wires, a low battery, or too little current. The ARC16 draws about 310 mA, so this is worth checking first. Solder the wires to the terminals and put a capacitor near the 5V supply. |
+| **You think one sensor has died** | Point a phone camera at the board and look at the screen. Every sensor should show a faint purple dot. Infrared is invisible to your eye but the camera picks it up, so a sensor with no dot is not getting power. Check the E pin is being held LOW as well. |
 | **Position jumps around wildly** | Not calibrated, or the sweep missed some sensors. Sweep again, slower and wider. |
 | **The robot steers the wrong way** | Your motors are mirrored. Swap the `+` and `−` in the two speed lines. |
 | **It follows a white line badly** | Add `sensors.setLine(WHITE);` in `setup()`. |
@@ -405,13 +458,13 @@ Not every mistake can be detected, so here are the usual suspects:
 
 Do this in order, and change **one number at a time**.
 
-1. **Start with `setPID(0.015, 0.0, 0.0)`** — only `kp`, the other two at zero.
+1. **Start with `setPID(0.008, 0.0, 0.0)`** — only `kp`, the other two at zero.
 2. **Raise `kp`** until the robot follows the line. Too low and it drifts off corners; too high and it snakes violently.
 3. **Back `kp` off slightly**, until it follows with only a gentle wobble.
-4. **Add a little `kd`**, maybe `0.005` to `0.02`. This damps the wobble.
+4. **Add a little `kd`**, maybe `0.002` to `0.01`. This damps the wobble.
 5. **Leave `ki` at 0.** You only need it if the robot consistently sits to one side, and even then keep it tiny.
 
-> **Coming from the ARC8?** ARC16's position range is twice as wide (−8000 to +8000 instead of −4000 to +4000), so start with roughly **half** the `kp` you used there.
+> **Coming from the ARC8?** The ARC16 position range is four times as wide, −16000 to +16000 instead of −4000 to +4000, so start with roughly **a quarter** of the `kp` you used there.
 
 | Symptom | Try |
 |---|---|
@@ -433,7 +486,7 @@ Faster robots need lower `kp`. If you raise your base speed, expect to retune.
 - **`BLACK` and `WHITE` are global names.** Many display libraries (Adafruit GFX, most TFT and OLED libraries) define their own. Using one alongside ARC16 will produce a "redefined" warning.
 - **Calibration only narrows.** The remembered light/dark values can only get further apart. Moving to a completely different surface means restarting the sketch before recalibrating.
 - **The PID never resets.** The running total behind `ki` and the previous error carry on for the whole run.
-- **No EEPROM.** Calibration is forgotten at power-off — which is what you want, since the lighting changes.
+- **No EEPROM.** Calibration is forgotten at power-off, so you calibrate each time you switch on. That is worth doing anyway. Room lighting does not bother the ARC16 much, but the track surface, the sensor height and the battery voltage all change between sessions, and those do move the readings.
 - **No memory tricks.** No `malloc`, no `new`, no `String`. Everything is fixed size, so it cannot fragment your RAM mid-race.
 - **No `delay()` inside the library.** The only blocking wait is the 5-microsecond multiplexer settling pause, which is unavoidable.
 
@@ -443,12 +496,12 @@ Measured on an Arduino Nano, compiled with the real Arduino AVR core:
 
 | Example | Flash | RAM |
 |---|---|---|
-| BasicRead | 3,778 bytes (11.5%) | 402 bytes (19.6%) |
-| ExternalReference | 4,642 bytes (14.2%) | 402 bytes (19.6%) |
-| Calibration | 4,834 bytes (14.8%) | 402 bytes (19.6%) |
-| DigitalRead | 4,906 bytes (15.0%) | 418 bytes (20.4%) |
-| CustomWeights | 5,116 bytes (15.6%) | 434 bytes (21.2%) |
-| LineFollowerPID | 5,772 bytes (17.6%) | 402 bytes (19.6%) |
+| BasicRead | 3,940 bytes (12.0%) | 402 bytes (19.6%) |
+| ExternalReference | 4,804 bytes (14.7%) | 402 bytes (19.6%) |
+| Calibration | 4,996 bytes (15.2%) | 402 bytes (19.6%) |
+| DigitalRead | 5,068 bytes (15.5%) | 418 bytes (20.4%) |
+| CustomWeights | 5,280 bytes (16.1%) | 434 bytes (21.2%) |
+| LineFollowerPID | 5,934 bytes (18.1%) | 402 bytes (19.6%) |
 
 Plenty of room left for the rest of your robot.
 

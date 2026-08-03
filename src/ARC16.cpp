@@ -16,13 +16,23 @@ ARC16::ARC16() {
     // the lowest, so the very first real reading replaces both of them.
     _calMin[i] = 1023;
     _calMax[i] = 0;
-
-    // Sensors on the left get negative numbers, sensors on the right get
-    // positive ones. There is no zero, so the middle of the bar falls
-    // between sensors 7 and 8. Sensor 0 gets -8, sensor 15 gets +8, and the
-    // whole lot balances out to a dead-centre position of 0.
-    _weights[i] = (i < 8) ? (i - 8) : (i - 7);
   }
+
+  // How much each sensor counts towards the line position.
+  //
+  // Sensor 0 is the one on the RIGHT of the array and sensor 15 is on the
+  // LEFT, so the right-hand half counts positive and the left-hand half
+  // counts negative. There is no zero, because with an even number of
+  // sensors the true middle falls between sensors 7 and 8.
+  //
+  // The numbers spread out towards the ends rather than climbing evenly.
+  // That matches the curved shape of the array: the outer sensors sit
+  // further out to the side, so they should move the position further when
+  // the line reaches them. It all balances to a dead centre of 0.
+  _weights[0]  =  16;  _weights[1]  =  14;  _weights[2]  =  12;  _weights[3]  =   8;
+  _weights[4]  =   6;  _weights[5]  =   4;  _weights[6]  =   2;  _weights[7]  =   1;
+  _weights[8]  =  -1;  _weights[9]  =  -2;  _weights[10] =  -4;  _weights[11] =  -6;
+  _weights[12] =  -8;  _weights[13] = -12;  _weights[14] = -14;  _weights[15] = -16;
 
   _hasRead       = false;
   _calibrated    = false;
