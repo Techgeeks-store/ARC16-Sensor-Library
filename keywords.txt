@@ -1,0 +1,41 @@
+#######################################
+# Syntax Coloring Map For ARC16
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+ARC16	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+read	KEYWORD2
+calibrate	KEYWORD2
+readCalibrated	KEYWORD2
+getMin	KEYWORD2
+getMax	KEYWORD2
+setThreshold	KEYWORD2
+readDigital	KEYWORD2
+onLine	KEYWORD2
+countOnLine	KEYWORD2
+setLine	KEYWORD2
+setWeights	KEYWORD2
+readLine	KEYWORD2
+getError	KEYWORD2
+lineFound	KEYWORD2
+setPID	KEYWORD2
+getCorrection	KEYWORD2
+printRaw	KEYWORD2
+printCalibrated	KEYWORD2
+printLine	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+BLACK	LITERAL1
+WHITE	LITERAL1

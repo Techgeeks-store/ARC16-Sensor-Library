@@ -1,0 +1,16 @@
+# Packaged library archive - rebuilt on release, not tracked in the repo
+ARC16.zip
+
+# Internal build spec - kept locally, not shipped to users
+ARC16-library-prompt.md
+
+# Claude Code local settings
+.claude/
+
+# Arduino / editor leftovers
+build/
+*.o
+*.elf
+*.hex
+.DS_Store
+Thumbs.db
