@@ -314,7 +314,7 @@ The position is a weighted average of the sensors that can see the line. Because
 ### 4. Steering
 
 ```cpp
-sensors.setPID(0.035, 0.0, 0.75);   // kp, ki, kd
+sensors.setPID(0.03, 0.0, 0.8);   // kp, ki, kd
 
 void loop() {
   sensors.read(values);
@@ -460,10 +460,10 @@ Not every mistake can be detected, so here are the usual suspects:
 
 Do this in order, and change **one number at a time**.
 
-1. **Start with `setPID(0.035, 0.0, 0.0)`** — only `kp`, the other two at zero.
+1. **Start with `setPID(0.03, 0.0, 0.0)`** — only `kp`, the other two at zero.
 2. **Raise `kp`** until the robot follows the line. Too low and it drifts off corners; too high and it snakes violently.
 3. **Back `kp` off slightly**, until it follows with only a gentle wobble.
-4. **Add `kd`**, around `0.75` to start. This damps the wobble, and is much larger than `kp` because it works on the *change* in error.
+4. **Add `kd`**, around `0.8` to start. This damps the wobble, and is much larger than `kp` because it works on the *change* in error.
 5. **Leave `ki` at 0.** You only need it if the robot consistently sits to one side, and even then keep it tiny.
 
 > **Coming from the ARC8?** The ARC16 position range is twice as wide, −16000 to +16000 instead of −8000 to +8000, so start with roughly **half** the `kp` you used there.
