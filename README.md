@@ -390,6 +390,8 @@ Positive means the line drifted right, so speed the left wheel up.
 | `void printCalibrated()` | Prints the 16 stretched 0–1000 readings. |
 | `void printLine()` | Prints `line: <position> error: <error>`. |
 
+> Because sensor `0` is the right-hand end, `printRaw()`, `printCalibrated()` and `readDigital()` all run **right to left**. Slide tape under the right-hand end of the array and the first number on screen is the one that moves.
+>
 > The print functions and every warning use `Serial`, but the library **never** calls `Serial.begin()` for you. Do that yourself in `setup()`, or you will see nothing at all.
 >
 > `printLine()` shows the last position that was worked out — it does not recalculate. Call `readLine()` or `getError()` first if you want it fresh.
