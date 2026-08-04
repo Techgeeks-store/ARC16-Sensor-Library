@@ -20,7 +20,6 @@ Built for line following, maze solving, and edge or sumo-ring detection. Twice t
 - [Full function reference](#full-function-reference)
 - [Example sketches](#example-sketches)
 - [Warning messages and what to do about them](#warning-messages-and-what-to-do-about-them)
-- [Tuning the PID](#tuning-the-pid)
 - [Things to know](#things-to-know)
 - [License](#license)
 
@@ -309,28 +308,16 @@ The position is a weighted average of the sensors that can see the line. Because
 
 `getError()` is the same thing measured from the centre point. With the default weights the centre is 0, so both give the same answer — but if you set your own weights, `getError()` is the one that stays honest.
 
-**If every sensor loses the line,** the position stays at the last value it was sure about, so the robot keeps turning the way it was already turning. Use `lineFound()` to check.
+### Steering on it
 
-### 4. Steering
+This library works out *where the line is*. Turning that into motor speeds is the robot board's job, so the PID lives in the [RCBoard](https://github.com/Techgeeks-store/Blueprint01-Robot-Controller-Board) and [SpiritN20](https://github.com/Techgeeks-store/Spirit-N20-PCB-Library) libraries:
 
 ```cpp
-sensors.setPID(0.03, 0.0, 0.8);   // kp, ki, kd
-
-void loop() {
-  sensors.read(values);
-  int correction = sensors.getCorrection();
-
-  int leftSpeed  = BASE_SPEED - correction;
-  int rightSpeed = BASE_SPEED + correction;
-  // send those to your motors
-}
+int correction = Robot.getCorrection(sensors.getError());
+Robot.drive(base - correction, base + correction);
 ```
 
-Negative means the line drifted right, so the left wheel gets *less* and the right wheel more. That is why the correction is subtracted from the left.
-
----
-
-## Full function reference
+**If every sensor loses the line,** the position stays at the last value it was sure about, so the robot keeps turning the way it was already turning. Use `lineFound()` to check.
 
 ### Setting up
 
@@ -375,13 +362,6 @@ Negative means the line drifted right, so the left wheel gets *less* and the rig
 | `int getError()` | How far off centre, which is what you steer on. |
 | `bool lineFound()` | `true` if at least one sensor can see the line. |
 
-### Steering
-
-| Function | What it does |
-|---|---|
-| `void setPID(float kp, float ki, float kd)` | Sets the three steering numbers. |
-| `int getCorrection()` | The steering number. Negative = line drifted right. |
-
 ### Printing (for debugging)
 
 | Function | What it does |
@@ -414,7 +394,6 @@ All under **File → Examples → ARC16**.
 | **BasicRead** | Reading all 16 sensors and printing them. Start here. |
 | **Calibration** | Sweeping to calibrate, then reading on the tidy 0–1000 scale. |
 | **DigitalRead** | Turning readings into simple yes/no, and counting sensors on the line. |
-| **LineFollowerPID** | A complete line follower with motor driver code. |
 | **CustomWeights** | Changing the weights and seeing how the position number changes. |
 | **ExternalReference** | The 3.3V AREF option, with the wiring warning in full. |
 
@@ -456,30 +435,6 @@ Not every mistake can be detected, so here are the usual suspects:
 
 ---
 
-## Tuning the PID
-
-Do this in order, and change **one number at a time**.
-
-1. **Start with `setPID(0.03, 0.0, 0.0)`** — only `kp`, the other two at zero.
-2. **Raise `kp`** until the robot follows the line. Too low and it drifts off corners; too high and it snakes violently.
-3. **Back `kp` off slightly**, until it follows with only a gentle wobble.
-4. **Add `kd`**, around `0.8` to start. This damps the wobble, and is much larger than `kp` because it works on the *change* in error.
-5. **Leave `ki` at 0.** You only need it if the robot consistently sits to one side, and even then keep it tiny.
-
-> **Coming from the ARC8?** The ARC16 position range is twice as wide, −16000 to +16000 instead of −8000 to +8000, so start with roughly **half** the `kp` you used there.
-
-| Symptom | Try |
-|---|---|
-| Drifts off on corners | Raise `kp` |
-| Snakes wildly side to side | Lower `kp`, or raise `kd` |
-| Wobbles gently but constantly | Raise `kd` |
-| Always rides slightly off to one side | A tiny `ki` |
-| Overshoots then swings back hard | Lower `ki` (or set it to 0) |
-
-Faster robots need lower `kp`. If you raise your base speed, expect to retune.
-
----
-
 ## Things to know
 
 - **Always exactly 16 sensors.** There is no sensor-count setting.
@@ -503,7 +458,6 @@ Measured on an Arduino Nano, compiled with the real Arduino AVR core:
 | Calibration | 4,996 bytes (15.2%) | 402 bytes (19.6%) |
 | DigitalRead | 5,068 bytes (15.5%) | 418 bytes (20.4%) |
 | CustomWeights | 5,280 bytes (16.1%) | 434 bytes (21.2%) |
-| LineFollowerPID | 5,934 bytes (18.1%) | 402 bytes (19.6%) |
 
 Plenty of room left for the rest of your robot.
 

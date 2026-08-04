@@ -77,12 +77,6 @@ class ARC16 {
     // Says whether any sensor can see the line at all.
     bool lineFound();
 
-    // Sets the three numbers that decide how hard the robot steers.
-    void setPID(float kp, float ki, float kd);
-
-    // Works out how hard to steer to get back onto the line.
-    int getCorrection();
-
     // Prints the 16 raw readings to the Serial Monitor.
     void printRaw();
 
@@ -109,11 +103,6 @@ class ARC16 {
     int   _setpoint;         // the position number that means "dead centre"
     bool  _lineIsBlack;      // true for a black line, false for a white line
     int   _lastLineValue;    // the last position we were sure about
-
-    float _kp, _ki, _kd;     // the three PID steering numbers
-    int   _lastError;        // the error from the previous getCorrection()
-    long  _integral;         // every error so far, added up. A long, because
-                             // an int fills up after only a few loops
 
     // Each warning prints only once, so one wiring mistake cannot flood
     // the Serial Monitor thousands of times a second.

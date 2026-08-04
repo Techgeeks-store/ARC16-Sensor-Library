@@ -44,12 +44,6 @@ ARC16::ARC16() {
   _lineIsBlack   = true;
   _lastLineValue = 0;
 
-  _kp = 0.0;
-  _ki = 0.0;
-  _kd = 0.0;
-  _lastError = 0;
-  _integral  = 0;
-
   _warnedPinTwice       = false;
   _warnedBadIndex       = false;
   _warnedThreshold      = false;
@@ -331,34 +325,6 @@ int ARC16::getError() {
 bool ARC16::lineFound() {
   if (!_checkRead()) return false;
   return countOnLine() > 0;
-}
-
-// ---------------------------------------------------------------------------
-// PID
-// ---------------------------------------------------------------------------
-
-void ARC16::setPID(float kp, float ki, float kd) {
-  _kp = kp;
-  _ki = ki;
-  _kd = kd;
-}
-
-int ARC16::getCorrection() {
-  int error = getError();
-
-  int P = error;               // how far off we are right now
-
-  // _integral keeps every error we have ever had, added together. With the
-  // default weights one error can be as big as 8000, so an int would fill up
-  // and wrap round to a huge negative number after only about four loops -
-  // which would yank the robot the wrong way. A long has room for hours.
-  _integral += error;
-
-  int D = error - _lastError;  // how fast that is changing
-  _lastError = error;
-
-  float output = _kp * P + _ki * _integral + _kd * D;
-  return (int)output;
 }
 
 // ---------------------------------------------------------------------------
