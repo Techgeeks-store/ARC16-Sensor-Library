@@ -103,7 +103,7 @@ There is an indicator LED on the board. It lights up steadily when the sensor ha
 
 ### Option 1 — Add .ZIP Library (recommended)
 
-1. Download **`ARC16.zip`** from the [Releases page](https://github.com/Techgeeks-store/ARC16-Sensor-Library/releases).
+1. Download **`ARC16.zip`**.
 2. Open the Arduino IDE.
 3. Go to **Sketch → Include Library → Add .ZIP Library…**
 4. Select the `ARC16.zip` file you downloaded.
